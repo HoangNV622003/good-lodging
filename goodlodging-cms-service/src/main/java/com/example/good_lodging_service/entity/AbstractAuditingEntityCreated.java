@@ -6,10 +6,13 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 
 public abstract class AbstractAuditingEntityCreated implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     @CreatedDate
     @Column(name = "date_created",updatable = false)
     @JsonIgnore

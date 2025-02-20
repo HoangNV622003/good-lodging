@@ -1,26 +1,18 @@
-package com.example.good_lodging_service.entity;
+package com.example.good_lodging_service.dto.response;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
-@Entity
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User extends AbstractAuditingDate implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class UserResponseDTO {
     Long id;
     String username;
     String password;
@@ -32,5 +24,6 @@ public class User extends AbstractAuditingDate implements Serializable {
     String gender;
     String urlAvatar;
     LocalDate birthday;
+    List<RoleResponseDTO> roles;
     Integer status;
 }

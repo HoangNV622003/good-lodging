@@ -1,0 +1,11 @@
+package com.example.good_lodging_service.repository;
+
+import com.example.good_lodging_service.entity.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface RoleRepository extends JpaRepository<Role, Long> {
+    List<Role> findAllByUserId(Long userId);
+}
