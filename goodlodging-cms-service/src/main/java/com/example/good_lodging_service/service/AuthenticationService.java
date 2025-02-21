@@ -4,15 +4,16 @@ import com.example.good_lodging_service.constants.ApiResponseCode;
 import com.example.good_lodging_service.constants.CommonStatus;
 import com.example.good_lodging_service.dto.request.AuthenticationRequestDTO;
 import com.example.good_lodging_service.dto.request.IntrospectRequestDTO;
+import com.example.good_lodging_service.dto.request.LogoutRequestDTO;
+import com.example.good_lodging_service.dto.request.RefreshRequestDTO;
 import com.example.good_lodging_service.dto.response.AuthenticationResponseDTO;
 import com.example.good_lodging_service.dto.response.IntrospectResponseDTO;
-import com.example.good_lodging_service.entity.Role;
+import com.example.good_lodging_service.entity.InvalidatedToken;
 import com.example.good_lodging_service.entity.User;
 import com.example.good_lodging_service.exception.AppException;
 import com.example.good_lodging_service.repository.InvalidatedTokenRepository;
 import com.example.good_lodging_service.repository.RoleRepository;
 import com.example.good_lodging_service.repository.UserRepository;
-import com.example.good_lodging_service.security.AuthenticationToken;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -32,7 +33,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -63,33 +63,53 @@ public class AuthenticationService {
                 () -> new AppException(ApiResponseCode.ENTITY_NOT_FOUND));
         if (!passwordEncoder.matches(requestDTO.getPassword(), user.getPassword()))
             throw new AppException(ApiResponseCode.INVALID_PASSWORD);
-        List<String> roles = roleRepository.findAllByUserId(user.getId()).stream().map(Role::getName).toList();
         return AuthenticationResponseDTO.builder()
-                .token(generateToken(AuthenticationToken.builder()
-                        .userId(user.getId())
-                        .roles(roles)
-                        .build()))
+                .token(generateToken(user))
+                .authenticated(true)
                 .build();
     }
 
-    public IntrospectResponseDTO introspect(IntrospectRequestDTO requestDTO) {
+    public IntrospectResponseDTO introspect(IntrospectRequestDTO requestDTO) throws ParseException, JOSEException {
         String token = requestDTO.getToken();
         boolean isValid = true;
         try {
             verifyToken(token, false);
         } catch (AppException e) {
             isValid = false;
-        } catch (ParseException | JOSEException e) {
-            throw new RuntimeException(e);
         }
         return IntrospectResponseDTO.builder().valid(isValid).build();
+    }
+
+    public void logout(LogoutRequestDTO requestDTO) throws ParseException, JOSEException {
+        try {
+            var signedJWT = verifyToken(requestDTO.getToken(), true);
+            String jit = signedJWT.getJWTClaimsSet().getJWTID();
+            Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+            invalidatedTokenRepository.save(new InvalidatedToken(jit, expireTime));
+        } catch (AppException e) {
+            log.error(ApiResponseCode.INVALID_TOKEN.getMessage());
+            throw new AppException(ApiResponseCode.INVALID_TOKEN);
+        }
+    }
+
+    public AuthenticationResponseDTO refreshToken(RefreshRequestDTO requestDTO) throws ParseException, JOSEException {
+        var signedJWT = verifyToken(requestDTO.getToken(), true);
+        String jit = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = new InvalidatedToken(jit, expireTime);
+        invalidatedTokenRepository.save(invalidatedToken);
+
+        String username = signedJWT.getJWTClaimsSet().getSubject();
+        User user = userRepository.findByUsernameAndStatus(username, CommonStatus.ACTIVE.getValue()).orElseThrow(
+                () -> new AppException(ApiResponseCode.ENTITY_NOT_FOUND));
+        return AuthenticationResponseDTO.builder().token(generateToken(user)).build();
     }
 
     private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
         SignedJWT signedJWT = SignedJWT.parse(token);
         Date expiration = (isRefresh)
-                ? new Date(signedJWT.getJWTClaimsSet().getIssueTime().toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.MINUTES).toEpochMilli())
+                ? new Date(signedJWT.getJWTClaimsSet().getIssueTime().toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli())
                 : signedJWT.getJWTClaimsSet().getExpirationTime();
         boolean verified = signedJWT.verify(verifier);
         if (!verified && expiration.after(new Date()))
@@ -101,16 +121,16 @@ public class AuthenticationService {
         return signedJWT;
     }
 
-    private String generateToken(AuthenticationToken authenticationToken) {
+    private String generateToken(User user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(authenticationToken.getUsername())
+                .subject(user.getUsername())
                 .issueTime(new Date())
                 .issuer("huce.edu.vn")
                 .expirationTime(new Date(Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("userId", authenticationToken.getUserId())
-                .claim("scope", buildScope(authenticationToken))
+                .claim("userId", user.getId())
+                .claim("scope", buildScope(user))
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(jwsHeader, payload);
@@ -123,11 +143,11 @@ public class AuthenticationService {
         }
     }
 
-    private String buildScope(AuthenticationToken authentication) {
+    private String buildScope(User user) {
         StringJoiner scope = new StringJoiner(" ");
-        if (!CollectionUtils.isEmpty(authentication.getRoles())) {
-            authentication.getRoles().forEach(role -> {
-                scope.add("ROLE_" + role);
+        if (!CollectionUtils.isEmpty(user.getRoles())) {
+            user.getRoles().forEach(role -> {
+                scope.add("ROLE_" + role.getName());
             });
         }
         return scope.toString();

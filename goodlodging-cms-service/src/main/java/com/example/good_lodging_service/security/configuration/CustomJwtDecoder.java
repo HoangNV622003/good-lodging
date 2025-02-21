@@ -1,6 +1,7 @@
 package com.example.good_lodging_service.security.configuration;
 
 import com.example.good_lodging_service.dto.request.IntrospectRequestDTO;
+import com.example.good_lodging_service.dto.response.IntrospectResponseDTO;
 import com.example.good_lodging_service.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
@@ -26,13 +27,18 @@ public class CustomJwtDecoder implements JwtDecoder {
     private String signerKey;
 
     @Autowired
-    AuthenticationService authenticationService;
+    private AuthenticationService authenticationService;
     private NimbusJwtDecoder nimbusJwtDecoder=null;
 
     @Override
     public Jwt decode(String token) throws JwtException {
-        var introspectResponse = authenticationService.introspect(new IntrospectRequestDTO(token));
+        IntrospectResponseDTO introspectResponse = null;
+        try {
+            introspectResponse = authenticationService.introspect(new IntrospectRequestDTO(token));
         if(!introspectResponse.isValid()) throw new JwtException("invalid token");
+        } catch (ParseException | JOSEException e) {
+            throw new JwtException(e.getMessage());
+        }
         if (Objects.isNull(nimbusJwtDecoder)) {
             SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");
             nimbusJwtDecoder = NimbusJwtDecoder.withSecretKey(secretKeySpec).macAlgorithm(MacAlgorithm.HS512).build();

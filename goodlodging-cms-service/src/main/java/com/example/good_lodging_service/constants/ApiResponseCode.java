@@ -36,6 +36,10 @@ public enum ApiResponseCode {
     UNAUTHORIZED(2008, "You do not have permission", HttpStatus.FORBIDDEN),
     PASSWORD_CHANGED_SUCCESSFULLY(2009,"Mật khẩu đã được thay đổi thành công",HttpStatus.OK),
     USER_DELETED_SUCCESSFULLY(2010,"Người dùng đã được xóa thành công",HttpStatus.OK),
+    INVALID_TOKEN(2011,"Invalid token",HttpStatus.BAD_REQUEST),
+
+    ADDRESS_ALREADY_EXISTS(2021,"Address already exists",HttpStatus.BAD_REQUEST),
+    ADDRESS_DELETED_SUCCESSFULLY(2022,"Address already deleted",HttpStatus.OK),
     ;
     private final Integer code;
     private final String message;

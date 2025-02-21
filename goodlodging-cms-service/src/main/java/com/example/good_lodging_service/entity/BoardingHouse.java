@@ -1,14 +1,13 @@
 package com.example.good_lodging_service.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -28,5 +27,8 @@ public class BoardingHouse extends AbstractAuditingEntity implements Serializabl
     String address;
     String phone;
     String email;
+    Float electricityPrice;
+    Float waterPrice;
+    Boolean hasElevator;
     Integer status;
 }

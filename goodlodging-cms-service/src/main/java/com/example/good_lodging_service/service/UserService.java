@@ -32,7 +32,7 @@ public class UserService {
 
     public UserResponseDTO createUser(UserCreateRequestDTO requestDTO) {
         // find user by username, email, phone
-        if(userRepository.existByUsernameOrEmailOrPhoneWithQuery(requestDTO.getUsername(), requestDTO.getEmail(), requestDTO.getPhone(), CommonStatus.ACTIVE.getValue())){
+        if(userRepository.existByUsernameOrEmailOrPhoneWithQuery(requestDTO.getUsername(), requestDTO.getEmail(), requestDTO.getPhone(), CommonStatus.ACTIVE.getValue())>0){
             throw new AppException(ApiResponseCode.USER_ALREADY_EXISTS);
         }
 
@@ -45,7 +45,7 @@ public class UserService {
     public UserResponseDTO updateUser(Long id, UserUpdateRequestDTO requestDTO) {
         User user=userRepository.findById(id).orElseThrow(()-> new AppException(ApiResponseCode.USER_NOT_FOUND));
 
-        if (userRepository.existsByEmailOrPhoneAndIdNotWithQuery(requestDTO.getEmail(), requestDTO.getPhone(), CommonStatus.ACTIVE.getValue(),id)){
+        if (userRepository.existsByEmailOrPhoneAndIdNotWithQuery(requestDTO.getEmail(), requestDTO.getPhone(), CommonStatus.ACTIVE.getValue(),id)>0){
             throw new AppException(ApiResponseCode.EMAIL_OR_PHONE_NUMBER_ALREADY_EXISTS);
         }
 
@@ -69,7 +69,7 @@ public class UserService {
     }
 
     public List<User> findAll(Pageable pageable) {
-        return userRepository.findAllByStatus(CommonStatus.ACTIVE, pageable);
+        return userRepository.findAllByStatus(CommonStatus.ACTIVE.getValue(), pageable);
     }
 
     public UserResponseDTO getUser(Long id) {

@@ -34,7 +34,8 @@ public class SecurityConfig {
         http.oauth2ResourceServer(oath2-> oath2
                 .jwt(jwtConfigurer -> jwtConfigurer
                         .decoder(jwtDecoder)
-                        .jwtAuthenticationConverter(jwtConverter())));
+                        .jwtAuthenticationConverter(jwtConverter()))
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
         return http.build();
     }
     @Bean

@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserUpdateRequestDTO {
-    Long id;
     String firstName;
     String lastName;
     String email;
@@ -21,5 +20,4 @@ public class UserUpdateRequestDTO {
     String gender;
     String urlAvatar;
     LocalDate birthday;
-    Integer status;
 }

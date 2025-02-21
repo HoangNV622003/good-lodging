@@ -1,19 +1,19 @@
-package com.example.good_lodging_service.entity;
+package com.example.good_lodging_service.dto.response;
 
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.io.Serial;
-
-@Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Role{
-    @Id
+public class DeviceResponseDTO {
+    Long id;
+    Long roomId;
     String name;
     String description;
+    String deviceStatus;
+    Integer status;
 }

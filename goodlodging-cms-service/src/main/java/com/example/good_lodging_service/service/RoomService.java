@@ -1,5 +1,6 @@
 package com.example.good_lodging_service.service;
 
+import com.example.good_lodging_service.repository.RoomRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Transactional
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class ProfileService {
-
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+public class RoomService {
+    RoomRepository roomRepository;
 }

@@ -8,6 +8,8 @@ import lombok.experimental.FieldDefaults;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -33,4 +35,6 @@ public class User extends AbstractAuditingDate implements Serializable {
     String urlAvatar;
     LocalDate birthday;
     Integer status;
+    @ManyToMany(fetch = FetchType.LAZY)
+    Set<Role> roles;
 }

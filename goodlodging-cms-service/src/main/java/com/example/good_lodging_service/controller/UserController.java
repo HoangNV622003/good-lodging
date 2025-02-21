@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class UserController {
     UserService userService;
 
     @GetMapping
-    public ApiResponse<List<UserResponseDTO>> getUsers(@PageableDefault(size = 15, sort = "modifiedDate") Pageable pageable) {
+    public ApiResponse<List<UserResponseDTO>> getUsers(@PageableDefault(size = 15, sort = "dateUpdated",direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.<List<UserResponseDTO>>builder().result(userService.getAllUsers(pageable)).build();
     }
 
@@ -41,7 +42,7 @@ public class UserController {
 
     @PutMapping("/{userId}")
     public ApiResponse<UserResponseDTO> updateUser(@PathVariable Long userId,@RequestBody UserUpdateRequestDTO requestDTO) {
-        return ApiResponse.<UserResponseDTO>builder().build();
+        return ApiResponse.<UserResponseDTO>builder().result(userService.updateUser(userId,requestDTO)).build();
     }
 
     @DeleteMapping("/{userId}")
